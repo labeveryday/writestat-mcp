@@ -73,7 +73,7 @@ class MLDetector:
         except ImportError as e:
             raise ImportError(
                 "ML detection requires torch and transformers. "
-                "Install with: pip install 'readability-mcp[ml]' "
+                "Install with: pip install 'writestat-mcp[ml]' "
                 "or: pip install torch transformers"
             ) from e
 

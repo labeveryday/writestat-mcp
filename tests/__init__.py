@@ -1,1 +1,1 @@
-"""Tests for readability-mcp package."""
+"""Tests for writestat-mcp package."""

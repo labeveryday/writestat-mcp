@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to the Readability MCP Server will be documented in this file.
+All notable changes to the WriteStat MCP Server will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -27,8 +27,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Package Structure**
   - PyPI-ready packaging with `pyproject.toml`
-  - CLI entrypoint: `readability-mcp`
-  - Optional ML dependencies: `pip install readability-mcp[ml]`
+  - CLI entrypoint: `writestat-mcp`
+  - Optional ML dependencies: `pip install writestat-mcp[ml]`
   - Modular analyzer architecture
 
 - **Evaluation Framework**

@@ -1,9 +1,9 @@
-# Readability MCP Server
+# WriteStat MCP Server
 
-![Readability MCP Banner](assets/banner.png)
+![WriteStat MCP Banner](assets/banner.png)
 
-[![PyPI version](https://img.shields.io/pypi/v/readability-mcp.svg)](https://pypi.org/project/readability-mcp/)
-[![Tests](https://github.com/labeveryday/readability-mcp/actions/workflows/tests.yml/badge.svg)](https://github.com/labeveryday/readability-mcp/actions/workflows/tests.yml)
+[![PyPI version](https://img.shields.io/pypi/v/writestat-mcp.svg)](https://pypi.org/project/writestat-mcp/)
+[![Tests](https://github.com/labeveryday/writestat-mcp/actions/workflows/tests.yml/badge.svg)](https://github.com/labeveryday/writestat-mcp/actions/workflows/tests.yml)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -15,10 +15,10 @@ Created by [Du'An Lightfoot](https://duanlightfoot.com) | [@labeveryday](https:/
 ## Installation
 
 ```bash
-pip install readability-mcp
+pip install writestat-mcp
 
 # Optional: ML-based detection (~500MB for torch/transformers)
-pip install readability-mcp[ml]
+pip install writestat-mcp[ml]
 
 # Required: NLTK data
 python -c "import nltk; nltk.download('punkt_tab')"
@@ -43,7 +43,7 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)
 {
   "mcpServers": {
     "readability": {
-      "command": "readability-mcp"
+      "command": "writestat-mcp"
     }
   }
 }
@@ -54,15 +54,15 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)
 ```bash
 # After PyPI publish
 # Pattern detection only (lightweight)
-claude mcp add readability-mcp -- uvx readability-mcp
+claude mcp add writestat-mcp -- uvx writestat-mcp
 
 # Or with ML detection (~500MB download)
-claude mcp add readability-mcp -- uvx "readability-mcp[ml]"
+claude mcp add writestat-mcp -- uvx "writestat-mcp[ml]"
 
 # From local source
-cd /path/to/readability-mcp
+cd /path/to/writestat-mcp
 pip install -e .
-claude mcp add readability-mcp -- readability-mcp
+claude mcp add writestat-mcp -- writestat-mcp
 ```
 
 ## Example Prompts

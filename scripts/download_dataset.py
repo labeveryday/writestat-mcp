@@ -207,7 +207,8 @@ def main():
         download_raid(args.output, args.samples)
 
     print("\nTo run evaluation:")
-    print(f"  python scripts/evaluate.py --ai-samples {args.output}/ai_samples_*.jsonl --human-samples {args.output}/human_samples_*.jsonl")
+    print(f"  python scripts/evaluate.py --ai-samples {args.output}/ai_samples_*.jsonl \\")
+    print(f"    --human-samples {args.output}/human_samples_*.jsonl")
 
 
 if __name__ == "__main__":

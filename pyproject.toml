@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "readability-mcp"
+name = "writestat-mcp"
 version = "0.1.0"
 description = "MCP server for text readability analysis and AI content detection with ML-based scoring"
 readme = "README.md"
@@ -52,16 +52,16 @@ dev = [
 ]
 
 [project.scripts]
-readability-mcp = "readability_mcp.cli:main"
+writestat-mcp = "writestat_mcp.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/labeveryday/readability-mcp"
-Documentation = "https://github.com/labeveryday/readability-mcp#readme"
-Repository = "https://github.com/labeveryday/readability-mcp"
-Issues = "https://github.com/labeveryday/readability-mcp/issues"
+Homepage = "https://github.com/labeveryday/writestat-mcp"
+Documentation = "https://github.com/labeveryday/writestat-mcp#readme"
+Repository = "https://github.com/labeveryday/writestat-mcp"
+Issues = "https://github.com/labeveryday/writestat-mcp/issues"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/readability_mcp"]
+packages = ["src/writestat_mcp"]
 
 [tool.hatch.build.targets.sdist]
 include = [

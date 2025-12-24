@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Evaluation script for readability-mcp AI detection.
+Evaluation script for writestat-mcp AI detection.
 
 Usage:
     python scripts/evaluate.py --ai-samples data/ai_samples.jsonl --human-samples data/human_samples.jsonl
@@ -12,14 +12,14 @@ Sample JSONL format:
 import argparse
 import json
 import sys
-from pathlib import Path
-from dataclasses import dataclass
 from collections import defaultdict
+from dataclasses import dataclass
+from pathlib import Path
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from readability_mcp.analyzers import AIPatternDetector
+from writestat_mcp.analyzers import AIPatternDetector
 
 
 @dataclass
@@ -199,7 +199,9 @@ def print_report(results: list[EvalResult], thresholds: list[float] = None):
 def main():
     parser = argparse.ArgumentParser(description="Evaluate AI detection accuracy")
     parser.add_argument("--ai-samples", type=Path, required=True, help="JSONL file with AI text samples")
-    parser.add_argument("--human-samples", type=Path, required=True, help="JSONL file with human text samples")
+    parser.add_argument(
+        "--human-samples", type=Path, required=True, help="JSONL file with human text samples"
+    )
     parser.add_argument("--output", type=Path, help="Output JSON file for detailed results")
     args = parser.parse_args()
 

@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-CLI entrypoint for the Readability MCP Server.
+CLI entrypoint for the WriteStat MCP Server.
 
 Usage:
-    readability-mcp          # Run the MCP server (default)
-    readability-mcp --help   # Show help
-    readability-mcp --version  # Show version
+    writestat-mcp          # Run the MCP server (default)
+    writestat-mcp --help   # Show help
+    writestat-mcp --version  # Show version
 """
 
 import argparse
@@ -13,9 +13,9 @@ import sys
 
 
 def main() -> None:
-    """Main CLI entrypoint for the readability-mcp server."""
+    """Main CLI entrypoint for the writestat-mcp server."""
     parser = argparse.ArgumentParser(
-        prog="readability-mcp",
+        prog="writestat-mcp",
         description="MCP server for text readability analysis and AI content detection",
     )
     parser.add_argument(
@@ -29,7 +29,7 @@ def main() -> None:
     if args.version:
         from . import __version__
 
-        print(f"readability-mcp {__version__}")
+        print(f"writestat-mcp {__version__}")
         sys.exit(0)
 
     # Run the MCP server
