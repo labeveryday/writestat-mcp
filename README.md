@@ -46,7 +46,7 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)
   "mcpServers": {
     "readability-mcp": {
       "command": "uvx",
-      "args": "writestat-mcp"
+      "args": ["writestat-mcp"]
     }
   }
 ```
