@@ -1,6 +1,8 @@
 # WriteStat MCP Server
 
-![WriteStat MCP Banner](assets/banner.png)
+<p align="center">
+  <img src="https://raw.githubusercontent.com/labeveryday/writestat-mcp/main/assets/banner.png" alt="WriteStat MCP Architecture" width="800"/>
+</p>
 
 [![PyPI version](https://img.shields.io/pypi/v/writestat-mcp.svg)](https://pypi.org/project/writestat-mcp/)
 [![Tests](https://github.com/labeveryday/writestat-mcp/actions/workflows/tests.yml/badge.svg)](https://github.com/labeveryday/writestat-mcp/actions/workflows/tests.yml)
