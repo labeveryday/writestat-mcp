@@ -1,0 +1,88 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "readability-mcp"
+version = "0.1.0"
+description = "MCP server for text readability analysis and AI content detection with ML-based scoring"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10"
+authors = [
+    { name = "Du'An Lightfoot", email = "29664932+labeveryday@users.noreply.github.com" }
+]
+keywords = [
+    "mcp",
+    "readability",
+    "ai-detection",
+    "text-analysis",
+    "nlp",
+    "claude",
+    "fastmcp"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Text Processing :: Linguistic",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "mcp>=1.0.0",
+    "textstat>=0.7.3",
+    "nltk>=3.8",
+]
+
+[project.optional-dependencies]
+ml = [
+    "torch>=2.0.0",
+    "transformers>=4.30.0",
+]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+]
+
+[project.scripts]
+readability-mcp = "readability_mcp.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/labeveryday/readability-mcp"
+Documentation = "https://github.com/labeveryday/readability-mcp#readme"
+Repository = "https://github.com/labeveryday/readability-mcp"
+Issues = "https://github.com/labeveryday/readability-mcp/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/readability_mcp"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/src",
+    "/tests",
+    "/README.md",
+    "/LICENSE",
+    "/CHANGELOG.md",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W"]
+
+[tool.black]
+line-length = 110
+target-version = ["py310"]

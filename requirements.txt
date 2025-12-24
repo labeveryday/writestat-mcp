@@ -1,4 +1,0 @@
-fastmcp>=0.1.0
-textstat>=0.7.3
-nltk>=3.8
-pyyaml>=6.0

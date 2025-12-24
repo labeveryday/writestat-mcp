@@ -7,6 +7,7 @@ from typing import Any
 
 class ValidationError(Exception):
     """Custom exception for validation errors"""
+
     pass
 
 
@@ -125,9 +126,7 @@ def validate_sensitivity(sensitivity: str) -> str:
     sensitivity = sensitivity.lower().strip()
 
     if sensitivity not in valid_levels:
-        raise ValidationError(
-            f"Sensitivity must be one of {', '.join(sorted(valid_levels))}"
-        )
+        raise ValidationError(f"Sensitivity must be one of {', '.join(sorted(valid_levels))}")
 
     return sensitivity
 
@@ -152,8 +151,14 @@ def validate_metrics(metrics: list[str] | None) -> list[str] | None:
         raise ValidationError("Metrics must be a list of strings")
 
     valid_metrics = {
-        "flesch_kincaid", "flesch_ease", "smog", "ari",
-        "coleman_liau", "linsear", "gunning_fog", "dale_chall"
+        "flesch_kincaid",
+        "flesch_ease",
+        "smog",
+        "ari",
+        "coleman_liau",
+        "linsear",
+        "gunning_fog",
+        "dale_chall",
     }
 
     validated = []
@@ -186,14 +191,6 @@ def create_error_response(error: Exception) -> dict[str, Any]:
         Error response dictionary
     """
     if isinstance(error, ValidationError):
-        return {
-            "error": "Validation error",
-            "message": str(error),
-            "type": "validation_error"
-        }
+        return {"error": "Validation error", "message": str(error), "type": "validation_error"}
     else:
-        return {
-            "error": "Processing error",
-            "message": str(error),
-            "type": "processing_error"
-        }
+        return {"error": "Processing error", "message": str(error), "type": "processing_error"}

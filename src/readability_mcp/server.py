@@ -4,14 +4,27 @@ Readability MCP Server
 Main server module that exposes MCP tools for text analysis
 """
 
+import asyncio
 import logging
 from typing import Any
-from fastmcp import FastMCP
 
-from src.analyzers import ReadabilityAnalyzer, SentenceAnalyzer, AIPatternDetector
-from src.validation import (
-    validate_text, validate_count, validate_threshold,
-    validate_sensitivity, validate_metrics, create_error_response, ValidationError
+import nltk
+import textstat
+
+try:
+    from mcp.server.fastmcp import FastMCP
+except ImportError:
+    raise RuntimeError("Missing MCP package. Install with: pip install 'mcp>=1.0.0'")
+
+from .analyzers import AIPatternDetector, MLDetector, ReadabilityAnalyzer, SentenceAnalyzer
+from .validation import (
+    ValidationError,
+    create_error_response,
+    validate_count,
+    validate_metrics,
+    validate_sensitivity,
+    validate_text,
+    validate_threshold,
 )
 
 # Initialize FastMCP server
@@ -25,6 +38,15 @@ logger = logging.getLogger(__name__)
 readability_analyzer = ReadabilityAnalyzer()
 sentence_analyzer = SentenceAnalyzer()
 ai_detector = AIPatternDetector()
+ml_detector: MLDetector | None = None  # Lazy loaded to avoid startup cost
+
+
+def get_ml_detector() -> MLDetector:
+    """Get or create the ML detector (lazy loaded)."""
+    global ml_detector
+    if ml_detector is None:
+        ml_detector = MLDetector()
+    return ml_detector
 
 
 @mcp.tool()
@@ -72,11 +94,7 @@ async def analyze_text(text: str, metrics: list[str] | None = None) -> dict[str,
 
 
 @mcp.tool()
-async def find_hard_sentences(
-    text: str,
-    count: int = 5,
-    threshold: float = 10.0
-) -> dict[str, Any]:
+async def find_hard_sentences(text: str, count: int = 5, threshold: float = 10.0) -> dict[str, Any]:
     """
     Find the most difficult sentences in the text
 
@@ -122,17 +140,17 @@ async def find_hard_sentences(
         difficult_sentences = sentence_analyzer.find_difficult_sentences(text, count, threshold)
 
         # Calculate average grade level for context
-        import nltk
-        import textstat
         sentences = nltk.sent_tokenize(text)
-        total_grade = sum(textstat.flesch_kincaid_grade(s) for s in sentences if len(s.strip()) > 10)
+        total_grade = sum(
+            textstat.flesch_kincaid_grade(s) for s in sentences if len(s.strip()) > 10
+        )
         avg_grade = total_grade / len(sentences) if sentences else 0
 
         result = {
             "difficult_sentences": difficult_sentences,
             "total_sentences": len(sentences),
             "average_grade_level": round(avg_grade, 1),
-            "threshold_used": threshold
+            "threshold_used": threshold,
         }
 
         logger.info(f"Found {len(difficult_sentences)} difficult sentences out of {len(sentences)}")
@@ -147,10 +165,7 @@ async def find_hard_sentences(
 
 
 @mcp.tool()
-async def check_ai_phrases(
-    text: str,
-    sensitivity: str = "medium"
-) -> dict[str, Any]:
+async def check_ai_phrases(text: str, sensitivity: str = "medium") -> dict[str, Any]:
     """
     Check text for common AI-generated writing patterns
 
@@ -203,14 +218,73 @@ async def check_ai_phrases(
 
 
 @mcp.tool()
-async def batch_analyze(texts: list[str], analysis_types: list[str] | None = None) -> dict[str, Any]:
+async def detect_ai_ml(text: str) -> dict[str, Any]:
+    """
+    Detect AI-generated content using ML-based analysis (GPT-2 perplexity).
+
+    This tool uses machine learning to analyze text for AI characteristics:
+    - Perplexity scoring using GPT-2 (AI text is more predictable)
+    - Burstiness analysis (AI text has uniform sentence patterns)
+    - Vocabulary diversity (AI text often has repetitive word choices)
+    - Repetition pattern detection
+
+    Note: First call may take 10-30 seconds to load the model.
+
+    Args:
+        text: The text to analyze (1-500,000 characters)
+
+    Returns:
+        Dictionary containing:
+        - ai_probability: 0-100 probability the text is AI-generated
+        - interpretation: Human-readable assessment
+        - confidence: Low/Medium/High based on text length
+        - metrics: Detailed breakdown of each signal
+        - component_scores: How each metric contributed to the score
+
+    Example:
+        {
+            "ai_probability": 72.5,
+            "interpretation": "Likely AI-generated - Significant AI patterns present",
+            "confidence": "High",
+            "metrics": {
+                "perplexity": 35.2,
+                "burstiness": 0.25,
+                "vocabulary_diversity": 0.45
+            }
+        }
+    """
+    try:
+        text = validate_text(text)
+
+        detector = get_ml_detector()
+        result = detector.analyze(text)
+
+        logger.info(
+            f"ML AI detection complete: probability={result['ai_probability']}%, "
+            f"confidence={result['confidence']}"
+        )
+
+        return result
+
+    except ValidationError as e:
+        logger.warning(f"Validation error: {str(e)}")
+        return create_error_response(e)
+    except Exception as e:
+        logger.error(f"Error in ML AI detection: {str(e)}")
+        return create_error_response(e)
+
+
+@mcp.tool()
+async def batch_analyze(
+    texts: list[str], analysis_types: list[str] | None = None
+) -> dict[str, Any]:
     """
     Analyze multiple texts at once for efficient batch processing
 
     Args:
         texts: List of texts to analyze (1-20 texts)
         analysis_types: Types of analysis to perform on each text.
-                       Options: "readability", "sentences", "ai_patterns", "all"
+                       Options: "readability", "sentences", "ai_patterns", "ai_ml", "all"
                        Default: ["all"]
 
     Returns:
@@ -246,11 +320,11 @@ async def batch_analyze(texts: list[str], analysis_types: list[str] | None = Non
         if len(texts) > 20:
             raise ValidationError("Cannot analyze more than 20 texts at once")
 
-        # Default to all analysis types
+        # Default to all analysis types (excluding ai_ml by default due to cost)
         if analysis_types is None:
             analysis_types = ["all"]
 
-        valid_types = {"readability", "sentences", "ai_patterns", "all"}
+        valid_types = {"readability", "sentences", "ai_patterns", "ai_ml", "all"}
         analysis_set = set()
         for atype in analysis_types:
             if atype not in valid_types:
@@ -262,45 +336,53 @@ async def batch_analyze(texts: list[str], analysis_types: list[str] | None = Non
                 break
             analysis_set.add(atype)
 
-        results = []
-        for idx, text in enumerate(texts):
+        # Process texts in parallel using asyncio
+        async def analyze_single_text(idx: int, text: str) -> dict[str, Any]:
             text = validate_text(text)
-            result = {"text_index": idx}
+            result: dict[str, Any] = {"text_index": idx}
 
             if "readability" in analysis_set:
                 result["readability"] = readability_analyzer.analyze(text)
 
             if "sentences" in analysis_set:
                 difficult = sentence_analyzer.find_difficult_sentences(text, count=3)
-                result["difficult_sentences"] = {
-                    "count": len(difficult),
-                    "sentences": difficult
-                }
+                result["difficult_sentences"] = {"count": len(difficult), "sentences": difficult}
 
             if "ai_patterns" in analysis_set:
                 result["ai_detection"] = ai_detector.analyze(text)
 
-            results.append(result)
+            if "ai_ml" in analysis_set:
+                detector = get_ml_detector()
+                result["ai_ml_detection"] = detector.analyze(text)
+
+            return result
+
+        # Run all analyses in parallel
+        results = await asyncio.gather(
+            *[analyze_single_text(idx, text) for idx, text in enumerate(texts)]
+        )
 
         # Calculate summary statistics
-        summary = {}
+        summary: dict[str, Any] = {}
         if "readability" in analysis_set:
-            avg_grade = sum(r["readability"]["flesch_kincaid_grade"] for r in results) / len(results)
+            avg_grade = sum(r["readability"]["flesch_kincaid_grade"] for r in results) / len(
+                results
+            )
             avg_ease = sum(r["readability"]["flesch_reading_ease"] for r in results) / len(results)
             summary["avg_grade_level"] = round(avg_grade, 1)
             summary["avg_reading_ease"] = round(avg_ease, 1)
 
         if "ai_patterns" in analysis_set:
             avg_ai = sum(r["ai_detection"]["ai_likelihood_score"] for r in results) / len(results)
-            summary["avg_ai_score"] = round(avg_ai, 1)
+            summary["avg_ai_pattern_score"] = round(avg_ai, 1)
+
+        if "ai_ml" in analysis_set:
+            avg_ml = sum(r["ai_ml_detection"]["ai_probability"] for r in results) / len(results)
+            summary["avg_ai_ml_probability"] = round(avg_ml, 1)
 
         logger.info(f"Batch analyzed {len(texts)} texts")
 
-        return {
-            "results": results,
-            "summary": summary,
-            "total_texts": len(texts)
-        }
+        return {"results": results, "summary": summary, "total_texts": len(texts)}
 
     except ValidationError as e:
         logger.warning(f"Validation error: {str(e)}")
@@ -312,9 +394,7 @@ async def batch_analyze(texts: list[str], analysis_types: list[str] | None = Non
 
 @mcp.tool()
 async def compare_texts(
-    original_text: str,
-    revised_text: str,
-    comparison_aspects: list[str] | None = None
+    original_text: str, revised_text: str, comparison_aspects: list[str] | None = None
 ) -> dict[str, Any]:
     """
     Compare two versions of text (before/after editing) to see improvements
@@ -359,9 +439,13 @@ async def compare_texts(
         regressions = []
 
         # Grade level comparison
-        grade_diff = rev_readability["flesch_kincaid_grade"] - orig_readability["flesch_kincaid_grade"]
+        grade_diff = (
+            rev_readability["flesch_kincaid_grade"] - orig_readability["flesch_kincaid_grade"]
+        )
         if grade_diff < -0.5:
-            improvements.append(f"Reading level improved (decreased by {abs(grade_diff):.1f} grade levels)")
+            improvements.append(
+                f"Reading level improved (decreased by {abs(grade_diff):.1f} grade levels)"
+            )
         elif grade_diff > 0.5:
             regressions.append(f"Reading level increased by {grade_diff:.1f} grade levels")
 
@@ -375,12 +459,17 @@ async def compare_texts(
         # AI score comparison
         ai_diff = orig_ai["ai_likelihood_score"] - rev_ai["ai_likelihood_score"]
         if ai_diff > 10:
-            improvements.append(f"AI-likeness reduced by {ai_diff:.1f} points (sounds more natural)")
+            improvements.append(
+                f"AI-likeness reduced by {ai_diff:.1f} points (sounds more natural)"
+            )
         elif ai_diff < -10:
             regressions.append(f"AI-likeness increased by {abs(ai_diff):.1f} points")
 
         # Word count comparison
-        word_diff = rev_readability["statistics"]["word_count"] - orig_readability["statistics"]["word_count"]
+        word_diff = (
+            rev_readability["statistics"]["word_count"]
+            - orig_readability["statistics"]["word_count"]
+        )
         if abs(word_diff) > 10:
             if word_diff < 0:
                 improvements.append(f"Text became more concise ({abs(word_diff)} fewer words)")
@@ -392,24 +481,33 @@ async def compare_texts(
         rev_avg_words = rev_readability["statistics"]["avg_words_per_sentence"]
         sentence_diff = rev_avg_words - orig_avg_words
         if sentence_diff < -2:
-            improvements.append(f"Sentences became shorter/simpler (avg {abs(sentence_diff):.1f} fewer words/sentence)")
+            improvements.append(
+                f"Sentences became shorter/simpler (avg {abs(sentence_diff):.1f} fewer words/sentence)"
+            )
         elif sentence_diff > 2:
-            regressions.append(f"Sentences became longer (avg {sentence_diff:.1f} more words/sentence)")
+            regressions.append(
+                f"Sentences became longer (avg {sentence_diff:.1f} more words/sentence)"
+            )
 
         # Overall assessment
         overall_score = len(improvements) - len(regressions)
+        n_imp, n_reg = len(improvements), len(regressions)
         if overall_score > 0:
-            overall = f"✅ Overall improvement! {len(improvements)} improvements vs {len(regressions)} regressions"
+            overall = f"✅ Overall improvement! {n_imp} improvements vs {n_reg} regressions"
         elif overall_score < 0:
-            overall = f"⚠️ Some aspects regressed. {len(improvements)} improvements vs {len(regressions)} regressions"
+            overall = f"⚠️ Some aspects regressed. {n_imp} improvements vs {n_reg} regressions"
         else:
-            overall = f"↔️ Mixed changes. {len(improvements)} improvements and {len(regressions)} regressions"
+            overall = f"↔️ Mixed changes. {n_imp} improvements and {n_reg} regressions"
 
-        logger.info(f"Compared texts: {len(improvements)} improvements, {len(regressions)} regressions")
+        logger.info(
+            f"Compared texts: {len(improvements)} improvements, {len(regressions)} regressions"
+        )
 
         return {
             "overall_assessment": overall,
-            "improvements": improvements if improvements else ["No significant improvements detected"],
+            "improvements": (
+                improvements if improvements else ["No significant improvements detected"]
+            ),
             "regressions": regressions if regressions else ["No regressions detected"],
             "detailed_comparison": {
                 "original": {
@@ -417,19 +515,21 @@ async def compare_texts(
                     "reading_ease": orig_readability["flesch_reading_ease"],
                     "ai_score": orig_ai["ai_likelihood_score"],
                     "word_count": orig_readability["statistics"]["word_count"],
-                    "avg_words_per_sentence": orig_avg_words
+                    "avg_words_per_sentence": orig_avg_words,
                 },
                 "revised": {
                     "grade_level": rev_readability["flesch_kincaid_grade"],
                     "reading_ease": rev_readability["flesch_reading_ease"],
                     "ai_score": rev_ai["ai_likelihood_score"],
                     "word_count": rev_readability["statistics"]["word_count"],
-                    "avg_words_per_sentence": rev_avg_words
-                }
+                    "avg_words_per_sentence": rev_avg_words,
+                },
             },
-            "recommendations": rev_ai["recommendations"] if rev_ai["ai_likelihood_score"] > 30 else [
-                "Text looks good! Consider checking for difficult sentences if you want further improvements."
-            ]
+            "recommendations": (
+                rev_ai["recommendations"]
+                if rev_ai["ai_likelihood_score"] > 30
+                else ["Text looks good! Check difficult sentences for further improvements."]
+            ),
         }
 
     except ValidationError as e:
@@ -452,16 +552,18 @@ async def health_check() -> dict[str, str]:
 
     return {
         "status": "healthy",
-        "version": "2.0.0",
+        "version": "0.1.0",
         "textstat_version": textstat.__version__,
+        "ml_model_loaded": ml_detector is not None,
         "tools_available": [
             "analyze_text",
             "find_hard_sentences",
             "check_ai_phrases",
+            "detect_ai_ml",
             "batch_analyze",
             "compare_texts",
-            "health_check"
-        ]
+            "health_check",
+        ],
     }
 
 

@@ -1,280 +1,137 @@
 # Readability MCP Server
 
-A high-performance Model Context Protocol (MCP) server that provides comprehensive text analysis tools for readability scoring, sentence difficulty analysis, and AI-generated content detection. This server helps writers improve their AI-assisted writing by providing objective, measurable feedback directly within Claude or other MCP-compatible AI assistants.
+![Readability MCP Banner](assets/banner.png)
 
-**Version 2.0** - Now with batch analysis, text comparison, enhanced validation, and performance optimizations!
+[![PyPI version](https://img.shields.io/pypi/v/readability-mcp.svg)](https://pypi.org/project/readability-mcp/)
+[![Tests](https://github.com/labeveryday/readability-mcp/actions/workflows/tests.yml/badge.svg)](https://github.com/labeveryday/readability-mcp/actions/workflows/tests.yml)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## Features
+MCP server for text readability analysis and AI pattern detection. Helps writers identify AI-like patterns and improve readability.
 
-### 🎯 Core Analysis Tools
-
-#### 1. **Text Readability Analysis** (`analyze_text`)
-- **Flesch-Kincaid Grade Level** - US grade level needed to understand the text
-- **Flesch Reading Ease** - Score from 0-100 (higher = easier to read)
-- **SMOG Index** - Simple Measure of Gobbledygook
-- **Automated Readability Index** - Estimate of US grade level
-- **Coleman-Liau Index** - Grade level based on characters
-- **Gunning Fog Index** - Years of education needed
-- **Dale-Chall Score** - Comprehension difficulty
-- **Linsear Write Formula** - Grade level for technical documents
-- Provides word, sentence, and syllable statistics
-- Human-readable interpretation of scores
-- Estimated reading time
-
-#### 2. **Difficult Sentence Detection** (`find_hard_sentences`)
-- Identifies the most complex sentences in your text
-- Provides specific reasons why sentences are difficult:
-  - Sentence length issues
-  - Complex vocabulary (syllable analysis)
-  - Multiple clauses and subordinate elements
-  - Possible passive voice usage
-- Shows sentence position in original text
-- Calculates individual grade levels per sentence
-- Customizable threshold and count
-
-#### 3. **AI Pattern Detection** (`check_ai_phrases`)
-- Detects common AI-generated writing patterns with **optimized pre-compiled regex**
-- Provides AI likelihood score (0-100) using **improved density-based algorithm**
-- Identifies specific phrases and their context
-- Four confidence levels:
-  - **Dead Giveaways** - Phrases almost exclusively used by AI
-  - **High Probability** - Strong indicators of AI writing
-  - **Moderate Indicators** - Common in AI and formal writing
-  - **Structural Patterns** - Formatting patterns typical of AI
-- Offers specific recommendations for more natural writing
-- Adjustable sensitivity levels (low/medium/high)
-- **Performance**: 10+ analyses in ~2ms
-
-#### 4. **Batch Analysis** (`batch_analyze`) 🆕
-- Analyze multiple texts at once for efficient processing
-- Supports up to 20 texts per batch
-- Flexible analysis types: readability, sentences, ai_patterns, or all
-- Returns aggregate statistics across all texts
-- Perfect for comparing multiple drafts or sections
-
-#### 5. **Text Comparison** (`compare_texts`) 🆕
-- Compare before/after versions of your text
-- Automatic improvement detection:
-  - Reading level changes
-  - AI-likeness reduction
-  - Sentence complexity improvements
-  - Word count optimization
-- Clear visual feedback with ✅ improvements and ⚠️ regressions
-- Actionable recommendations for further refinement
-
-### 🚀 Performance & Quality Improvements
-
-- **Input Validation**: Comprehensive validation for all parameters with clear error messages
-- **Pre-compiled Regex**: Pattern matching is ~10x faster with pre-compiled patterns
-- **Modern Type Hints**: Consistent Python 3.10+ style type annotations throughout
-- **Improved AI Scoring**: Density-based algorithm eliminates false positives for short texts
-- **Error Handling**: Detailed error responses with error types and helpful messages
-- **Extensive Testing**: Comprehensive test suite covering all features and edge cases
+Created by [Du'An Lightfoot](https://duanlightfoot.com) | [@labeveryday](https://github.com/labeveryday)
 
 ## Installation
 
-### Prerequisites
-- Python 3.8 or higher
-- `uv` package manager (recommended) or `pip`
-
-### Quick Setup
-
-1. **Clone the repository:**
 ```bash
-git clone https://github.com/yourusername/readability-mcp.git
-cd readability-mcp
-```
+pip install readability-mcp
 
-2. **Set up virtual environment and install dependencies:**
+# Optional: ML-based detection (~500MB for torch/transformers)
+pip install readability-mcp[ml]
 
-Using `uv` (recommended):
-```bash
-uv venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-uv pip install -r requirements.txt
-```
-
-Or using traditional pip:
-```bash
-python3 -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-pip install -r requirements.txt
-```
-
-3. **Download required NLTK data:**
-```bash
+# Required: NLTK data
 python -c "import nltk; nltk.download('punkt_tab')"
 ```
 
-## Configuration for Claude Desktop
+## Tools
 
-Add the server to your Claude Desktop configuration file:
+| Tool | Description |
+|------|-------------|
+| `analyze_text` | Readability metrics (Flesch-Kincaid, SMOG, etc.) |
+| `find_hard_sentences` | Complex sentences with explanations |
+| `check_ai_phrases` | Pattern-based AI detection (60+ patterns) |
+| `detect_ai_ml` | ML detection via GPT-2 perplexity (optional) |
+| `batch_analyze` | Process multiple texts in parallel |
+| `compare_texts` | Before/after comparison |
 
-**macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`
-**Windows:** `%APPDATA%/Claude/claude_desktop_config.json`
+## Claude Desktop Setup
+
+Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%/Claude/claude_desktop_config.json` (Windows):
 
 ```json
 {
   "mcpServers": {
-    "readability-analyzer": {
-      "command": "python",
-      "args": ["/full/path/to/readability-mcp/server.py"],
-      "env": {
-        "PYTHONPATH": "/full/path/to/readability-mcp"
-      }
+    "readability": {
+      "command": "readability-mcp"
     }
   }
 }
 ```
 
-Or if using `uv`:
-```json
-{
-  "mcpServers": {
-    "readability-analyzer": {
-      "command": "uv",
-      "args": ["run", "python", "/full/path/to/readability-mcp/server.py"],
-      "cwd": "/full/path/to/readability-mcp"
-    }
-  }
-}
-```
+## With Claude Code
 
-## How to Use with Claude
-
-Once configured, you can use natural language to request text analysis. See [PROMPTS.md](PROMPTS.md) for detailed examples.
-
-### Quick Examples:
-
-**Basic readability check:**
-```
-"Analyze the readability of this text: [paste your text]"
-```
-
-**Find difficult sentences:**
-```
-"Show me the 5 hardest sentences in this document"
-```
-
-**Check for AI patterns:**
-```
-"Does this text sound AI-generated? [paste your text]"
-```
-
-**Compare before/after (🆕):**
-```
-"Compare these two versions of my text and show me what improved:
-Original: [paste original]
-Revised: [paste revised]"
-```
-
-**Batch analysis (🆕):**
-```
-"Analyze these 3 paragraphs and give me a summary:
-1. [first paragraph]
-2. [second paragraph]
-3. [third paragraph]"
-```
-
-**Complete analysis:**
-```
-"Give me a complete readability analysis including difficult sentences
-and AI patterns for this text"
-```
-
-## Project Structure
-
-```
-readability-mcp/
-├── server.py           # Main entry point
-├── src/
-│   ├── server.py      # MCP server with tool endpoints
-│   ├── analyzers/     # Analysis logic modules
-│   │   ├── readability.py
-│   │   ├── sentences.py
-│   │   └── ai_patterns.py
-│   └── models/        # Data structures
-│       └── results.py
-├── requirements.txt   # Python dependencies
-├── PROMPTS.md        # Example prompts for Claude
-├── CHANGELOG.md      # Version history
-└── README.md         # This file
-```
-
-## Interpreting Scores
-
-### Flesch-Kincaid Grade Levels
-- **5 and below:** Elementary school
-- **6-8:** Middle school
-- **9-12:** High school
-- **13-16:** College
-- **17+:** Graduate level
-
-### Flesch Reading Ease
-- **90-100:** Very easy (5th grade)
-- **80-90:** Easy (6th grade)
-- **70-80:** Fairly easy (7th grade)
-- **60-70:** Standard (8th-9th grade)
-- **50-60:** Fairly difficult (high school)
-- **30-50:** Difficult (college)
-- **0-30:** Very difficult (graduate)
-
-### AI Likelihood Score
-- **0-20:** Very low - naturally written
-- **20-40:** Low - mostly natural
-- **40-60:** Medium - noticeable AI patterns
-- **60-80:** High - strong AI characteristics
-- **80-100:** Very high - extensive AI patterns
-
-## Development
-
-### Running Tests
 ```bash
-# Quick functionality test
-python test_functionality.py
+# After PyPI publish
+# Pattern detection only (lightweight)
+claude mcp add readability-mcp -- uvx readability-mcp
 
-# Comprehensive test suite (recommended)
-python test_comprehensive.py
+# Or with ML detection (~500MB download)
+claude mcp add readability-mcp -- uvx "readability-mcp[ml]"
+
+# From local source
+cd /path/to/readability-mcp
+pip install -e .
+claude mcp add readability-mcp -- readability-mcp
 ```
 
-### Running the Server Directly
-```bash
-# With uv
-uv run python server.py
+## Example Prompts
 
-# Or with activated venv
-source .venv/bin/activate
-python server.py
-```
+**Full analysis workflow:**
+> I just wrote this blog post. Check the readability, find any difficult sentences, and flag anything that sounds too AI-generated. Then suggest improvements: 
 
-## Troubleshooting
+**Editing pass:**
+> This is my draft and my revised version. Compare them and tell me if the readability improved and if I removed the AI-sounding phrases. {First_draft} vs {second_draft}
 
-### NLTK Data Error
-If you see "Resource punkt_tab not found":
-```bash
-python -c "import nltk; nltk.download('punkt_tab')"
-```
+**Quick AI check:**
+> Does this paragraph have any AI tells? Be specific about which phrases to fix: 
 
-### Server Not Appearing in Claude
-1. Verify the config file path is correct
-2. Ensure Python/uv path in config is absolute
-3. Restart Claude Desktop after config changes
-4. Check server health: `uv run python -c "from src.server import health_check"`
+**Target audience check:**
+> I'm writing for high school students. Is this text at the right reading level? Which sentences are too complex: 
 
-## Contributing
+## AI Detection: What to Expect
 
-Contributions are welcome! Please feel free to submit pull requests or open issues for bugs and feature requests.
+This tool uses **heuristic pattern matching** and **zero-shot perplexity scoring**—not a fine-tuned classifier.
+
+### How It Works
+- **Pattern detection**: Catches stylistic markers (em dashes, filler phrases, buzzwords)
+- **ML detection**: Measures perplexity, vocabulary diversity, burstiness
+
+### Accuracy Context
+Research shows fine-tuned RoBERTa models achieve ~99% F1 on ChatGPT detection ([Guo et al., 2023](https://arxiv.org/abs/2301.07597)). Our lightweight approach won't match that. It's designed for:
+
+- Quick pattern screening
+- Catching obvious AI tells
+- Educational awareness about AI writing patterns
+
+**Not suitable for**: Academic integrity decisions, high-stakes verification
+
+### What the Research Found
+The [HC3 paper](https://arxiv.org/abs/2301.07597) identified key ChatGPT markers we detect:
+- Lower perplexity (more predictable) ✓
+- Lower vocabulary diversity ✓
+- Formal conjunctions ("Furthermore", "It's important to note") ✓
+- Organized structure with clear transitions ✓
+
+## Score Interpretation
+
+### Readability (Flesch-Kincaid Grade)
+| Grade | Audience |
+|-------|----------|
+| 5- | Elementary |
+| 6-8 | Middle school |
+| 9-12 | High school |
+| 13+ | College |
+
+### AI Probability (ML)
+| Score | Interpretation |
+|-------|----------------|
+| 0-30 | Likely human |
+| 30-60 | Uncertain |
+| 60-100 | Likely AI |
+
+## Requirements
+
+- Python 3.10+
+- Core: fastmcp, textstat, nltk
+- Optional `[ml]`: torch, transformers
 
 ## License
 
-MIT License - See [LICENSE](LICENSE) file for details
+MIT
 
-## Changelog
+## References
 
-See [CHANGELOG.md](CHANGELOG.md) for version history and updates.
-
-## Related Resources
-
-- [Model Context Protocol Documentation](https://modelcontextprotocol.io/)
-- [FastMCP Framework](https://github.com/jlowin/fastmcp)
-- [TextStat Library](https://github.com/shivam5992/textstat)
+- [HC3: How Close is ChatGPT to Human Experts?](https://arxiv.org/abs/2301.07597) - Guo et al., 2023
+- [Model Context Protocol](https://modelcontextprotocol.io/)
+- [FastMCP](https://github.com/jlowin/fastmcp)

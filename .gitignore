@@ -216,3 +216,7 @@ marimo/_lsp/
 __marimo__/
 
 .claude/
+CLAUDE.md
+*_pile.jsonl
+*_hc3.jsonl
+*_raid.jsonl
