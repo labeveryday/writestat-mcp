@@ -44,11 +44,11 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)
 ```json
 {
   "mcpServers": {
-    "readability": {
-      "command": "writestat-mcp"
+    "readability-mcp": {
+      "command": "uvx",
+      "args": "writestat-mcp"
     }
   }
-}
 ```
 
 ## With Claude Code
