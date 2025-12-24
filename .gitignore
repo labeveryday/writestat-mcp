@@ -193,9 +193,8 @@ cython_debug/
 # NLTK data
 nltk_data/
 
-# Test files
-test_*.py
-*_test.py
+# Test output files
+*.pyc
 
 # Ruff stuff:
 .ruff_cache/
