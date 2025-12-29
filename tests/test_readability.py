@@ -1,7 +1,9 @@
 """Tests for readability analysis."""
 
-import pytest
 import sys
+
+import pytest
+
 sys.path.insert(0, 'src')
 
 from writestat_mcp.analyzers import ReadabilityAnalyzer

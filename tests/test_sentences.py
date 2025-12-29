@@ -1,7 +1,9 @@
 """Tests for sentence difficulty analysis."""
 
-import pytest
 import sys
+
+import pytest
+
 sys.path.insert(0, 'src')
 
 from writestat_mcp.analyzers import SentenceAnalyzer
@@ -40,7 +42,9 @@ class TestSentenceAnalyzer:
     def test_analyze_sentence_difficulty(self, analyzer):
         """Test individual sentence analysis."""
         simple = "The cat sat."
-        complex_sent = "The implementation of sophisticated methodologies necessitates comprehensive understanding."
+        complex_sent = (
+            "The implementation of sophisticated methodologies necessitates comprehensive understanding."
+        )
 
         simple_grade, simple_issues = analyzer.analyze_sentence_difficulty(simple)
         complex_grade, complex_issues = analyzer.analyze_sentence_difficulty(complex_sent)

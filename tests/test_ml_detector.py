@@ -4,8 +4,10 @@ Note: These tests may be slow due to model loading.
 Run with: pytest tests/test_ml_detector.py -v
 """
 
-import pytest
 import sys
+
+import pytest
+
 sys.path.insert(0, 'src')
 
 from writestat_mcp.analyzers.ml_detector import MLDetector
@@ -29,7 +31,10 @@ class TestMLDetectorStatisticalMethods:
 
     def test_burstiness_varied_text(self, detector):
         """Test burstiness for varied sentence lengths (human-like)."""
-        text = "Hi. This is a medium length sentence with some variation. Now here is an extremely long and elaborate sentence that goes on and on with many words and clauses included within it."
+        text = (
+            "Hi. This is a medium length sentence with some variation. "
+            "Now here is an extremely long and elaborate sentence that goes on and on."
+        )
         burstiness = detector.calculate_burstiness(text)
 
         # Varied text should have higher burstiness
@@ -44,14 +49,20 @@ class TestMLDetectorStatisticalMethods:
 
     def test_vocabulary_diversity_high(self, detector):
         """Test vocabulary diversity for varied text."""
-        text = "Dogs bark loudly. Cats meow softly. Birds chirp melodiously. Fish swim gracefully. Horses gallop swiftly."
+        text = (
+            "Dogs bark loudly. Cats meow softly. Birds chirp melodiously. "
+            "Fish swim gracefully. Horses gallop swiftly."
+        )
         diversity = detector.calculate_vocabulary_diversity(text)
 
         assert diversity > 0.4
 
     def test_repetition_score_high(self, detector):
         """Test repetition score for text with repeated phrases."""
-        text = "It is important to note that this is important to note. We should note that it is important to note this matter."
+        text = (
+            "It is important to note that this is important to note. "
+            "We should note that it is important to note this matter."
+        )
         repetition = detector.calculate_repetition_score(text)
 
         assert repetition > 0.3
@@ -59,7 +70,10 @@ class TestMLDetectorStatisticalMethods:
     def test_repetition_score_low(self, detector):
         """Test repetition score for text without repeated phrases."""
         # Need at least 20 words for meaningful analysis
-        text = "The quick brown fox jumps over the lazy dog near the old barn. A wise man once said that knowledge is power and wisdom brings peace."
+        text = (
+            "The quick brown fox jumps over the lazy dog near the old barn. "
+            "A wise man once said that knowledge is power and wisdom brings peace."
+        )
         repetition = detector.calculate_repetition_score(text)
 
         assert repetition < 0.4

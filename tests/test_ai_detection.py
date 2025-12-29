@@ -1,7 +1,9 @@
 """Tests for AI pattern detection."""
 
-import pytest
 import sys
+
+import pytest
+
 sys.path.insert(0, 'src')
 
 from writestat_mcp.analyzers import AIPatternDetector
