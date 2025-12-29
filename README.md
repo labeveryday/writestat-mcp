@@ -17,6 +17,9 @@ Created by [Du'An Lightfoot](https://duanlightfoot.com) | [@labeveryday](https:/
 ## Installation
 
 ```bash
+If on a MacBook
+brew install uv
+
 pip install writestat-mcp
 
 # Optional: ML-based detection (~500MB for torch/transformers)
